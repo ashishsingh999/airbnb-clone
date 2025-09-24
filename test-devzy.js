@@ -14,6 +14,7 @@ const authSeller = async (userId) => {
             return false;
         }
     } catch (error) {
+        console.log("Error connecting to Clerk Client", error)
         return NextResponse.json({ success: false, message: error.message });
     }
 }
