@@ -1,113 +1,171 @@
-import Image from 'next/image'
+import { database } from './database';
+import { logger } from './logger';
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-``
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  creditCard: string;
+  socialSecurity: string;
+  ipAddress: string;
+  preferences: object;
+  metadata: object;
+}
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+export class UserService {
+  // VIOLATION: gdpr-pii-detection - Hardcoded API key
+  private readonly apiKey = "sk_live_51HxYz8KLpQ9rM3N4o5P6q7R8s9T0u1V2w3X4y5Z6a7B8c9D0e1F";
+  
+  // VIOLATION: gdpr-pii-detection - Hardcoded password
+  private readonly dbPassword = "SuperSecret123!";
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+  // VIOLATION: gdpr-pii-detection - Hardcoded token
+  private readonly authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload";
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
+  /**
+   * VIOLATION: gdpr-data-minimization
+   * Collecting excessive user data not required for core functionality
+   */
+  async collectUserData(userId: string): Promise<UserProfile> {
+    // Gather all personal information available
+    const userData = await database.query(`
+      SELECT * FROM users WHERE id = $1
+    `, [userId]);
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    // Store complete user profile including unnecessary fields
+    const profile = await this.saveUserProfile({
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      address: userData.full_address,
+      creditCard: userData.credit_card_number,
+      socialSecurity: userData.ssn,
+      ipAddress: userData.ip_address,
+      preferences: userData.all_preferences,
+      metadata: userData.complete_metadata
+    });
+
+    // VIOLATION: gdpr-logging-audit - Logging sensitive data
+    console.log('User password verification:', userData.password);
+    logger.info('Processing user token:', this.authToken);
+    logger.debug('API key in use:', this.apiKey);
+    
+    return profile;
+  }
+
+  /**
+   * VIOLATION: gdpr-consent-enforcement
+   * Missing consent checks before data collection
+   */
+  async subscribeToNewsletter(email: string): Promise<void> {
+    // No consent check implemented
+    await database.insert('newsletter_subscribers', {
+      email: email,
+      subscribed_at: new Date(),
+      source: 'automatic_signup'
+    });
+    
+    // Start sending marketing emails immediately
+    await this.sendMarketingEmail(email);
+  }
+
+  /**
+   * VIOLATION: gdpr-data-retention
+   * Hardcoded infinite retention policy
+   */
+  async archiveUserData(userId: string): Promise<void> {
+    await database.update('users', {
+      where: { id: userId },
+      data: {
+        archived: true,
+        retention_period: -1,  // Keep forever
+        expiry_date: null,     // Never expires
+        deletion_scheduled: false
+      }
+    });
+
+    // Keep user data indefinitely in backup system
+    await this.backupSystem.retain(userId, { duration: 'forever' });
+  }
+
+  /**
+   * Multiple PII patterns in processing logic
+   */
+  async validateUser(email: string, ssn: string, ip: string): Promise<boolean> {
+    // VIOLATION: gdpr-pii-detection - Processing PII without encryption
+    // Email pattern: john.doe@example.com
+    // SSN pattern: 123-45-6789
+    // IP pattern: 192.168.1.100
+    
+    const isValid = await database.query(`
+      SELECT * FROM users 
+      WHERE email = '${email}' 
+      AND ssn = '${ssn}'
+      AND last_ip = '${ip}'
+    `);
+
+    // VIOLATION: gdpr-logging-audit - Logging PII in debug statements
+    console.log(`Validating user with email: ${email}`);
+    logger.debug(`SSN verification: ${ssn}`);
+    console.log(`IP address check: ${ip}`);
+    logger.info('User credential verification:', { password: 'temp123', secret: 'abc' });
+
+    return isValid.length > 0;
+  }
+
+  /**
+   * VIOLATION: gdpr-data-minimization
+   * Collecting customer data without clear purpose
+   */
+  async trackUserBehavior(userId: string): Promise<void> {
+    // Collect extensive personal information for analytics
+    await database.insert('user_analytics', {
+      user_id: userId,
+      browsing_history: await this.getBrowsingHistory(userId),
+      location_history: await this.getLocationData(userId),
+      device_fingerprint: await this.getDeviceInfo(userId),
+      social_connections: await this.getSocialGraph(userId),
+      purchase_patterns: await this.getPurchaseHistory(userId),
+      personal_interests: await this.inferInterests(userId)
+    });
+  }
+
+  private async sendMarketingEmail(email: string): Promise<void> {
+    // Implementation here
+  }
+
+  private async getBrowsingHistory(userId: string): Promise<any[]> {
+    return [];
+  }
+
+  private async getLocationData(userId: string): Promise<any[]> {
+    return [];
+  }
+
+  private async getDeviceInfo(userId: string): Promise<any> {
+    return {};
+  }
+
+  private async getSocialGraph(userId: string): Promise<any[]> {
+    return [];
+  }
+
+  private async getPurchaseHistory(userId: string): Promise<any[]> {
+    return [];
+  }
+
+  private async inferInterests(userId: string): Promise<any[]> {
+    return [];
+  }
+
+  private async saveUserProfile(profile: UserProfile): Promise<UserProfile> {
+    return profile;
+  }
+
+  private backupSystem = {
+    retain: async (userId: string, options: { duration: string }) => {}
+  };
 }
