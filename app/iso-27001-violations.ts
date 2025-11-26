@@ -1,6 +1,9 @@
 import { database } from "./database";
 import { logger } from "./logger";
 
+const password = "admin123"; 
+const query = "SELECT * FROM users WHERE id=" + userId;  
+
 export class ISO27001Service {
   private systemConfig = {
     securityEnabled: true,
