@@ -5,6 +5,10 @@ const dbConfig = {
   api_key: 'sk_live_abc123xyz789',
 };
 
+
+console.log("Added a new log for testing incremental changes");
+
+
 function storeUserData(user: any) {
   const userEmail = 'john.doe@example.com';
   localStorage.setItem('email', userEmail);
